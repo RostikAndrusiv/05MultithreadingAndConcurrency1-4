@@ -6,11 +6,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 //TODO ask about iterator inside sync block
 public class Main {
-    public static Queue<Object> objects = new LinkedBlockingQueue<>();
+    public static final Queue<Object> objects = new LinkedBlockingQueue<>();
 
     public static void main(String[] args) throws InterruptedException {
 
-        BlockingObjectPool pool = new BlockingObjectPool(5);
+        BlockingObjectPoolSemaphore pool = new BlockingObjectPoolSemaphore(5);
 
         Thread thread1 = new Thread(() -> {
             while (true) {
@@ -32,7 +32,9 @@ public class Main {
                     if (objects.isEmpty()) {
                         continue;
                     }
-                    Object o = objects.poll();
+                   Object o = objects.poll();
+                    // uncomment to test take with full pool
+//                   Object o = objects.peek();
                     pool.take(o);
                     System.out.println(Thread.currentThread().getName() + " take " + o);
                     Thread.sleep(100);
