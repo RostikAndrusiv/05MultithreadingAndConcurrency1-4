@@ -1,15 +1,27 @@
-package org.example.part3;
+package org.example.part3.lockApproach;
+
+import lombok.SneakyThrows;
 
 import java.util.Queue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
-//TODO add lock.Condition
-//TODO Refactor wait and read
 public class Consumer implements Runnable {
-
     private final Queue<String> queue;
 
-    public Consumer(Queue<String> queue) {
-        this.queue = queue;
+    private Lock lock;
+
+    private final Condition notFullCondition;
+
+    private final Condition notEmptyCondition;
+
+    private int MAX_SIZE = 5;
+
+    public Consumer(CustomQueue queue) {
+        this.queue = queue.getQueue();
+        this.lock = queue.getLock();
+        this.notEmptyCondition = queue.getNotEmptyCondition();
+        this.notFullCondition = queue.getNotFullCondition();
     }
 
     @Override
@@ -17,27 +29,30 @@ public class Consumer implements Runnable {
     public void run() {
         try {
             while (true) {
-                synchronized (queue) {
+                lock.lock();
+                try {
                     waitForProducer();
                     readTopic();
+                } finally {
+                    lock.unlock();
                 }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
             Thread.currentThread().interrupt();
+            e.printStackTrace();
         }
     }
 
     private void waitForProducer() throws InterruptedException {
         while (queue.isEmpty()) {
             System.out.println(Thread.currentThread().getName() + ": Queue is empty, waiting for Producer");
-            queue.wait();
+            notEmptyCondition.await();
         }
     }
 
     private void readTopic() {
         String message = queue.poll();
         System.out.println(Thread.currentThread().getName() + " consumed:" + message);
-        queue.notifyAll();
+        notFullCondition.signalAll();
     }
 }

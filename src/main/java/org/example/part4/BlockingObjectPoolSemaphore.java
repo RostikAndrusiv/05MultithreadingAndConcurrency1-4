@@ -1,5 +1,8 @@
 package org.example.part4;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -9,19 +12,24 @@ import java.util.concurrent.Semaphore;
  * Pool that block when it has not any items or it full
  */
 //TODO Semaphore
+@Data
+@Slf4j
 public class BlockingObjectPoolSemaphore {
 
     private final Set<Object> pool = new HashSet<>();
 
     Semaphore semaphore;
 
-    private final int size;
+    protected final int size;
+
+    private int availableObjects;
 
     /**
      * Creates filled pool of passed size * * @param size of pool
      */
     public BlockingObjectPoolSemaphore(int size) {
         this.size = size;
+        availableObjects = size;
         init();
     }
 
@@ -37,6 +45,10 @@ public class BlockingObjectPoolSemaphore {
      */
     public Object get() {
         try {
+            if(availableObjects==0){
+                log.info("Pool is empty");
+                return null;
+            }
             semaphore.acquire();
             var instance = pool.iterator().next();
             pool.remove(instance);
@@ -52,7 +64,12 @@ public class BlockingObjectPoolSemaphore {
      * Puts object to pool or blocks if pool is full * * @param object to be taken back to pool
      */
     public void take(Object object) {
-            pool.add(object);
-            semaphore.release();
+        if(size>=availableObjects){
+            log.info("Pool is full");
+            return;
+        }
+
+        semaphore.release();
+        pool.add(object);
     }
 }

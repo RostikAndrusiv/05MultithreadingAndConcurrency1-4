@@ -1,5 +1,8 @@
 package org.example.part4;
 
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.Condition;
@@ -10,6 +13,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * Pool that block when it has not any items or it full
  */
 //TODO Semaphore
+//TODO await bad approach
+@Data
+@Slf4j
 public class BlockingObjectPoolConditionApproach {
 
     private final Set<Object> pool = new HashSet<>();
@@ -47,22 +53,21 @@ public class BlockingObjectPoolConditionApproach {
         lock.lock();
         try {
             while (availableObjects == 0) {
-                System.err.println("No objects available");
-                try {
-                    empty.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Thread.currentThread().interrupt();
-                }
+                log.info("Pool is empty");
+                empty.await();
             }
             var instance = pool.iterator().next();
             pool.remove(instance);
             availableObjects--;
             full.signalAll();
             return instance;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         } finally {
             lock.unlock();
         }
+        return null;
     }
 
     /**
@@ -72,17 +77,15 @@ public class BlockingObjectPoolConditionApproach {
         lock.lock();
         try {
             while (availableObjects == size) {
-                System.err.println("Pool is full");
-                try {
-                    full.await();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    Thread.currentThread().interrupt();
-                }
+                log.info("Pool is full");
+                full.await();
             }
             pool.add(object);
             availableObjects++;
             empty.signalAll();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         } finally {
             lock.unlock();
         }

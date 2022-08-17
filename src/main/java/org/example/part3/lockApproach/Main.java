@@ -1,14 +1,11 @@
-package org.example.part3;
+package org.example.part3.lockApproach;
 
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-//TODO add lock.Condition
-//TODO Refactor wait and read
 public class Main {
-
     //TODO ask about sonarlint .interrupt()
-    private static Queue<String> queue = new PriorityQueue<>();
+    private static CustomQueue queue = new CustomQueue();
 
     public static void main(String[] args) {
 

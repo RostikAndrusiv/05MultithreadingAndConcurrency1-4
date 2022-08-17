@@ -1,17 +1,27 @@
-package org.example.part3;
+package org.example.part3.lockApproach;
+
+import lombok.SneakyThrows;
 
 import java.util.Queue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
 
-//TODO add lock.Condition
-//TODO Refactor wait and read
 public class Producer implements Runnable {
-
     private final Queue<String> queue;
+
+    private Lock lock;
+
+    private final Condition notFullCondition;
+
+    private final Condition notEmptyCondition;
 
     private int MAX_SIZE = 5;
 
-    public Producer(Queue<String> queue) {
-        this.queue = queue;
+    public Producer(CustomQueue queue) {
+        this.queue = queue.getQueue();
+        this.lock = queue.getLock();
+        this.notEmptyCondition = queue.getNotEmptyCondition();
+        this.notFullCondition = queue.getNotFullCondition();
     }
 
     @Override
@@ -19,9 +29,12 @@ public class Producer implements Runnable {
     public void run() {
         try {
             while (true) {
-                synchronized (queue) {
+                lock.lock();
+                try{
                     waitForConsumer();
                     writeToQueue();
+                } finally {
+                    lock.unlock();
                 }
             }
         } catch (InterruptedException e) {
@@ -33,14 +46,15 @@ public class Producer implements Runnable {
     private void waitForConsumer() throws InterruptedException {
         while (MAX_SIZE <= queue.size()) {
             System.out.println(Thread.currentThread().getName() + ": Queue is full, waiting for Consumer");
-            queue.wait();
+            notFullCondition.await();
         }
     }
 
+    @SneakyThrows
     private void writeToQueue() {
         String veryImportantMessage = "blablab" + System.currentTimeMillis();
         queue.add(veryImportantMessage);
         System.out.println(Thread.currentThread() + " added " + veryImportantMessage);
-        queue.notifyAll();
+        notEmptyCondition.signalAll();
     }
 }
