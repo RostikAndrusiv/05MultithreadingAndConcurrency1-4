@@ -18,29 +18,38 @@ public class Producer implements Runnable {
     @SuppressWarnings("java:S2189")
     public void run() {
         try {
-            while (true) {
-                synchronized (queue) {
-                    waitForConsumer();
-                    writeToQueue();
-                }
-            }
+            produce();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             e.printStackTrace();
         }
     }
 
+    @SuppressWarnings("java:S2189")
+    private void produce() throws InterruptedException {
+        while (true) {
+            synchronized (queue) {
+                waitForConsumer();
+                writeToQueue();
+            }
+        }
+    }
+
     private void waitForConsumer() throws InterruptedException {
-        while (MAX_SIZE <= queue.size()) {
-            System.out.println(Thread.currentThread().getName() + ": Queue is full, waiting for Consumer");
-            queue.wait();
+        synchronized (queue) {
+            while (MAX_SIZE <= queue.size()) {
+                System.out.println(Thread.currentThread().getName() + ": Queue is full, waiting for Consumer");
+                queue.wait();
+            }
         }
     }
 
     private void writeToQueue() {
-        String veryImportantMessage = "blablab" + System.currentTimeMillis();
-        queue.add(veryImportantMessage);
-        System.out.println(Thread.currentThread() + " added " + veryImportantMessage);
-        queue.notifyAll();
+        synchronized (queue) {
+            String veryImportantMessage = "blablab" + System.currentTimeMillis();
+            queue.add(veryImportantMessage);
+            System.out.println(Thread.currentThread() + " added " + veryImportantMessage);
+            queue.notifyAll();
+        }
     }
 }

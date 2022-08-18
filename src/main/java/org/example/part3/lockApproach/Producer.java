@@ -28,18 +28,22 @@ public class Producer implements Runnable {
     @SuppressWarnings("java:S2189")
     public void run() {
         try {
-            while (true) {
-                lock.lock();
-                try{
-                    waitForConsumer();
-                    writeToQueue();
-                } finally {
-                    lock.unlock();
-                }
-            }
+            produce();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             e.printStackTrace();
+        }
+    }
+
+    private void produce() throws InterruptedException {
+        while (true) {
+            lock.lock();
+            try{
+                waitForConsumer();
+                writeToQueue();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 

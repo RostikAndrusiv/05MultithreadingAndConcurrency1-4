@@ -24,12 +24,10 @@ public class SynchronizedApp {
 
     private static class T2 extends Thread {
         public void run() {
-            List<Integer> copy = Collections.emptyList();
+            List<Integer> copy;
             while (true) {
                 synchronized (MUTEX) {
-                    if (!collection.isEmpty()) {
-                        copy = List.copyOf(collection);
-                    }
+                    copy = getListCopy();
                 }
                 copy.stream()
                         .reduce(Integer::sum)
@@ -40,13 +38,10 @@ public class SynchronizedApp {
 
     private static class T3 extends Thread {
         public void run() {
-            List<Integer> copy = Collections.emptyList();
+            List<Integer> copy;
             while (true) {
                 synchronized (MUTEX) {
-                    if (!collection.isEmpty()) {
-                        copy = List.copyOf(collection);
-                        MUTEX.notifyAll();
-                    }
+                    copy = getListCopy();
                 }
                 double sumOfSquares = copy.stream()
                         .mapToDouble(num -> (double) num)
@@ -54,6 +49,13 @@ public class SynchronizedApp {
                 System.out.println(Thread.currentThread().getName() + " sqrt of all nums is: " + Math.sqrt(sumOfSquares));
             }
         }
+    }
+
+    private static List<Integer> getListCopy() {
+        if (!collection.isEmpty()) {
+            return List.copyOf(collection);
+        }
+        return Collections.emptyList();
     }
 
     public static void main(String[] args) {

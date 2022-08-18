@@ -34,13 +34,11 @@ public class SynchronizedBlockWithCopy {
 
     private static class T2 extends Thread {
         public void run() {
-            List<Integer> copy = Collections.emptyList();
+            List<Integer> copy;
             while (true) {
                 synchronized (MUTEX) {
-                    if (!collection.isEmpty()) {
-                        copy = List.copyOf(collection);
-                        MUTEX.notifyAll();
-                    }
+                    copy = getListCopy();
+                    MUTEX.notifyAll();
                     try {
                         MUTEX.wait();
                     } catch (InterruptedException e) {
@@ -55,14 +53,13 @@ public class SynchronizedBlockWithCopy {
     }
 
     private static class T3 extends Thread {
+
         public void run() {
-            List<Integer> copy = Collections.emptyList();
+            List<Integer> copy;
             while (true) {
                 synchronized (MUTEX) {
-                    if (!collection.isEmpty()) {
-                        copy = List.copyOf(collection);
-                        MUTEX.notifyAll();
-                    }
+                    copy = getListCopy();
+                    MUTEX.notifyAll();
                     try {
                         MUTEX.wait();
                     } catch (InterruptedException e) {
@@ -76,6 +73,13 @@ public class SynchronizedBlockWithCopy {
                 MUTEX.notifyAll();
             }
         }
+    }
+
+    private static List<Integer> getListCopy() {
+        if (!collection.isEmpty()) {
+            return List.copyOf(collection);
+        }
+        return Collections.emptyList();
     }
 
     public static void main(String[] args) {

@@ -25,39 +25,37 @@ public class ExecutorServiceApp {
         }
     }
 
+    @SuppressWarnings("java:S2189")
     private static void countSum() {
-        List<Integer> copy = Collections.emptyList();
         while (true) {
-            lock.lock();
-            try {
-                if (!collection.isEmpty()) {
-                    copy = List.copyOf(collection);
-                }
-            } finally {
-                lock.unlock();
-            }
+            List<Integer> copy = getListCopy();
             copy.stream()
                     .reduce(Integer::sum)
                     .ifPresent(s -> System.out.println(Thread.currentThread().getName() + " sum is: " + s));
         }
     }
 
+    @SuppressWarnings("java:S2189")
     private static void countSqrt() {
-        List<Integer> copy = Collections.emptyList();
         while (true) {
-            lock.lock();
-            try {
-                if (!collection.isEmpty()) {
-                    copy = List.copyOf(collection);
-                }
-            } finally {
-                lock.unlock();
-            }
+            List<Integer> copy = getListCopy();
             double sumOfSquares = copy.stream()
                     .mapToDouble(num -> (double) num)
                     .reduce(0L, (acc, num) -> acc + num * num);
             System.out.println(Thread.currentThread().getName() + " sqrt of all nums is: " + Math.sqrt(sumOfSquares));
         }
+    }
+
+    private static List<Integer> getListCopy() {
+        lock.lock();
+        try {
+            if (!collection.isEmpty()) {
+                return List.copyOf(collection);
+            }
+        } finally {
+            lock.unlock();
+        }
+        return Collections.emptyList();
     }
 
     public static void main(String[] args) {

@@ -16,28 +16,36 @@ public class Consumer implements Runnable {
     @SuppressWarnings("java:S2189")
     public void run() {
         try {
-            while (true) {
-                synchronized (queue) {
-                    waitForProducer();
-                    readTopic();
-                }
-            }
+            consume();
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
         }
     }
 
+    private void consume() throws InterruptedException {
+        while (true) {
+            synchronized (queue) {
+                waitForProducer();
+                readTopic();
+            }
+        }
+    }
+
     private void waitForProducer() throws InterruptedException {
-        while (queue.isEmpty()) {
-            System.out.println(Thread.currentThread().getName() + ": Queue is empty, waiting for Producer");
-            queue.wait();
+        synchronized (queue) {
+            while (queue.isEmpty()) {
+                System.out.println(Thread.currentThread().getName() + ": Queue is empty, waiting for Producer");
+                queue.wait();
+            }
         }
     }
 
     private void readTopic() {
-        String message = queue.poll();
-        System.out.println(Thread.currentThread().getName() + " consumed:" + message);
-        queue.notifyAll();
+        synchronized (queue) {
+            String message = queue.poll();
+            System.out.println(Thread.currentThread().getName() + " consumed:" + message);
+            queue.notifyAll();
+        }
     }
 }

@@ -28,18 +28,22 @@ public class Consumer implements Runnable {
     @SuppressWarnings("java:S2189")
     public void run() {
         try {
-            while (true) {
-                lock.lock();
-                try {
-                    waitForProducer();
-                    readTopic();
-                } finally {
-                    lock.unlock();
-                }
-            }
+            consume();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             e.printStackTrace();
+        }
+    }
+
+    private void consume() throws InterruptedException {
+        while (true) {
+            lock.lock();
+            try {
+                waitForProducer();
+                readTopic();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
